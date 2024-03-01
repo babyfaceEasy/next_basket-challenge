@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+
+  # Web Server Service
+  user_nginx:
+    image: nginx:alpine
+    container_name: user_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    depends_on:
+      - user_app
+      - user_db
+    networks:
+      - next_basket_rabbitmq_net
+
+  #Database Service
+  user_db:
+    image : mysql
+    container_name : user_db
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: user
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - next_basket_rabbitmq_net
+  
+  # Application Service
+  user_app:
+    container_name: user_app
+    build: 
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "9000:9000"
+    working_dir: /var/www
+    networks:
+      - next_basket_rabbitmq_net
+
+  #phpMyAdmin Service
+  user_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: user_phpmyadmin
+    ports:
+      - "3400:80"
+    depends_on:
+      - user_db
+    environment:
+      PMA_HOST: user_db
+    networks:
+      - next_basket_rabbitmq_net
+
+
+networks:
+  next_basket_rabbitmq_net:
+    external: true

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+
+  # Web Server Service
+  notification_nginx:
+    image: nginx:alpine
+    container_name: notification_nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    depends_on:
+      - notification_app
+    networks:
+      - next_basket_rabbitmq_net
+
+  # Application Service
+  notification_app:
+    container_name: notification_app
+    build: 
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "9001:9000"
+    working_dir: /var/www
+    networks:
+      - next_basket_rabbitmq_net
+
+networks:
+  next_basket_rabbitmq_net:
+    external: true
